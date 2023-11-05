@@ -11,20 +11,19 @@ c = zeros(n, 1);
 c(1:n/2) = 1;
 c(n/2+1:end) = -1;
 
-H = eye(m+1);
-H(1, 1) = 0;
-f = zeros(m+1, 1);
-b = -ones(n, 1);
-A = ones(m+1, n);
-A(2:3, :) = X';
-A = A' .* c * -1;
+H = c .* (X * X') .* c';
+f = -ones(n, 1);
 
-Aeq = ones(1, m+1);
-Beq = 1/2;
-[theta,fval,exitflag,output,lambda] = quadprog(H,f,A,b,Aeq,Beq);
+Aeq = c';
+beq = 0;
+lb = zeros(n, 1);
+ub = ones(n, 1);
 
-w0 = theta(1);
-w = theta(2:end);
+alpha = quadprog(H, f, [], [], Aeq, beq, lb, ub);
+w = sum(alpha .* c .* X);
+indice = find(alpha > 0.1);
+w0 = 1 - (w * X(indice(1)));
+theta = [w0(1) w]';
 
 x1min=min(X(:,1));
 x1max=max(X(:,1));

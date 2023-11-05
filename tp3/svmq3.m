@@ -11,30 +11,29 @@ c = zeros(n, 1);
 c(1:n/2) = 1;
 c(n/2+1:end) = -1;
 
-H = eye(m+1);
-H(1, 1) = 0;
-f = zeros(m+1, 1);
-b = -ones(n, 1);
-A = ones(m+1, n);
-A(2:3, :) = X';
-A = A' .* c * -1;
-
-Aeq = ones(1, m+1);
-Beq = 1/2;
+e = 1 - c.*X;
+H = c .* (X * X') .* c';  
+f = -ones(n, 1);  
 C = 1;
-lb = zeros(m+1, 1);
-ub = ones(m+1, 1) * C;
+Aeq = c';
+beq = 0;
+lb = zeros(n, 1);
+ub = C * ones(n, 1);
 
-[theta,fval,exitflag,output,lambda] = quadprog(H,f,[],[],Aeq,Beq,lb,ub);
-alpha = theta(end);
-w0 = theta(1);
-w = theta(2:end);
+
+
+alpha = quadprog(H, f, [], [], Aeq, beq, lb, ub);
+w = sum(alpha .* c .* X);
+indice = find(alpha > 0.5);
+
+w0 = 1 - e - (w * X(indice(1)));
+theta = [w0(2) w]';
 
 x1min=min(X(:,1));
 x1max=max(X(:,1));
 x1 = (x1min:0.01:x1max)';
 
-x2 =   -(theta(1) + alpha+ theta(2) * x1)/ theta(3); %droite
+x2 =  -(theta(1) + theta(2) * x1)/ theta(3) ; %droite
 
 %decision = w0 + X*w;
 index1 = findClosestValueIndex(X(1:n/2, :), theta);
