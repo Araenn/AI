@@ -12,9 +12,9 @@ c(1:n/2) = 1;
 c(n/2+1:end) = -1;
 
 e = 1 - c.*X;
-H = c .* (X * X') .* c';  
+H = (c .* (X * X') .* c');  
 f = -ones(n, 1);  
-C = 2;
+C = 100;
 Aeq = c';
 beq = 0;
 lb = zeros(n, 1);
@@ -26,14 +26,14 @@ alpha = quadprog(H, f, [], [], Aeq, beq, lb, ub);
 w = sum(alpha .* c .* X);
 indice = find(alpha > 0.5);
 
-w0 = 1 - e - (w * X(indice(1)));
+w0 = 1 - e - (w * X(indice(1)).^2 - w*X(indice(1)));
 theta = [w0(2) w]';
 
 x1min=min(X(:,1));
 x1max=max(X(:,1));
 x1 = (x1min:0.01:x1max)';
 
-x2 =  -(theta(1) + theta(2) * x1)/ theta(3) ; %droite
+x2 =  -sqrt(theta(1)*x1  + theta(2) * x1.^2) / theta(3) ; %droite
 
 %decision = w0 + X*w;
 index1 = findClosestValueIndex(X(1:n/2, :), theta);
@@ -52,7 +52,7 @@ x2min=min(X(:,2));
 x2max=max(X(:,2));
 b2 = (x2min:0.01:x2max)';
 [Xg,Yg] = meshgrid(x1,b2);
-f= theta(2)*Xg + theta(3)*Yg + theta(1);
+f= theta(2)*Xg.^2 + theta(3)*Yg.^2 + theta(1);
 fp=-ones(size(Xg));
 fp(f>=0)=1;
 
