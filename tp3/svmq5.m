@@ -12,58 +12,48 @@ c(1:n/2) = 1;
 c(n/2+1:end) = -1;
 
 e = 1 - c.*X;
-H = (c .* (X * X') .* c');  
+H = c * c' .* (X * X' +1).^3;  
 f = -ones(n, 1);  
-C = 100;
+C = 110;
 Aeq = c';
 beq = 0;
 lb = zeros(n, 1);
 ub = C * ones(n, 1);
 
-
-
 alpha = quadprog(H, f, [], [], Aeq, beq, lb, ub);
 w = sum(alpha .* c .* X);
 indice = find(alpha > 0.5);
 
-w0 = 1 - e - (w * X(indice(1)).^2 - w*X(indice(1)));
+w0 = 1 - e - (w * X(indice(1)));
 theta = [w0(2) w]';
 
-x1min=min(X(:,1));
-x1max=max(X(:,1));
-x1 = (x1min:0.01:x1max)';
-
-x2 =  -sqrt(theta(1)*x1  + theta(2) * x1.^2) / theta(3) ; %droite
 
 %decision = w0 + X*w;
 index1 = findClosestValueIndex(X(1:n/2, :), theta);
 index2 = findClosestValueIndex(X(n/2+1:end, :), theta);
 
-figure(1)
-plot(X(1:n/2, 1), X(1:n/2, 2), 'x')
-hold on
-plot(X(n/2+1:end, 1), X(n/2+1:end, 2), 'x')
-plot(x1, x2)
-plot(X(index1, 1), X(index1, 2), "sb")
-plot(X(n/2+index2, 1), X(n/2+index2, 2), "sr")
-grid()
-
+x1min=min(X(:,1));
+x1max=max(X(:,1));
+x1 = (x1min:0.01:x1max)';
 x2min=min(X(:,2));
 x2max=max(X(:,2));
 b2 = (x2min:0.01:x2max)';
 [Xg,Yg] = meshgrid(x1,b2);
-f= theta(2)*Xg.^2 + theta(3)*Yg.^2 + theta(1);
-fp=-ones(size(Xg));
-fp(f>=0)=1;
+f = zeros(size(Xg));
+for i = 1:n
+    K_i = (Xg * X(i, 1) + Yg * X(i, 2) + 1).^3;
+    f = f + alpha(i) * c(i) * K_i;
+end
+fp = sign(f);
 
-figure(2)
+figure(1)
 imagesc(x1,b2,fp);
 axis xy
 colormap('sky')
 colorbar
 hold on
-plot(x1, x2, 'k', 'linewidth', 2)
 plot(X(1:n/2, 1), X(1:n/2, 2), 'xg')
 plot(X(n/2+1:end, 1), X(n/2+1:end, 2), 'xr')
-plot(X(index1, 1), X(index1, 2), "sk")
-plot(X(n/2+index2, 1), X(n/2+index2, 2), "sk")
+plot(X(indice(c(indice)==1), 1), X(indice(c(indice)==1), 2), "sk")
+plot(X(indice(c(indice)==-1), 1), X(indice(c(indice)==-1), 2), "sk")
+legend("Données classe 1", "Données classe 2", "Vecteurs supports")

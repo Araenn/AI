@@ -1,4 +1,5 @@
 clc; clear; close all
+%% code original
 rng(1); % For reproducibility
 r = sqrt(rand(100,1)); % Radius
 t = 2*pi*rand(100,1);  % Angle
@@ -15,6 +16,8 @@ plot(data2(:,1),data2(:,2),'b.','MarkerSize',15)
 ezpolar(@(x)1);ezpolar(@(x)2);
 axis equal
 hold off
+
+%% ma partie 
 X = [data1;data2];
 c = ones(200,1);
 c(1:100) = -1;
@@ -23,17 +26,12 @@ n = length(X);
 m = size(X, 2);
 e = 1 - c.*X;
 
-% Modify the calculation of the matrix H
-sigma = 0.2; % Set your desired value for sigma
-H = zeros(n, n);
-for i = 1:n
-    for j = 1:n
-        H(i,j) = c(i) * c(j) * exp(-norm(X(i,:) - X(j,:))^2 / (2 * sigma^2));
-    end
-end
+sigma = 0.2;
+delta_X = pdist2(X, X, 'euclidean').^2; 
+H = c * c' .* exp(-delta_X / (2 * sigma^2));
 
 f = -ones(n, 1);  
-C = inf; % Set your desired value for C
+C = inf;
 Aeq = c';
 beq = 0;
 lb = zeros(n, 1);
@@ -46,7 +44,6 @@ indice = find(alpha > 0.5);
 w0 = 1 - e - (w * X(indice(1)));
 theta = [w0(2) w]';
 
-% Modify the calculation of the decision function
 x1min=min(X(:,1));
 x1max=max(X(:,1));
 x1 = (x1min:0.01:x1max)';
@@ -60,7 +57,6 @@ for i = 1:n
 end
 fp = sign(f);
 
-% Rest of the code remains the same
 figure(2)
 imagesc(x1,b2,fp);
 axis xy
@@ -69,7 +65,6 @@ colorbar
 hold on
 plot(X(1:n/2, 1), X(1:n/2, 2), 'xg')
 plot(X(n/2+1:end, 1), X(n/2+1:end, 2), 'xr')
-plot(X(1:n/2, 1), X(1:n/2, 2), 'xg')
-plot(X(n/2+1:end, 1), X(n/2+1:end, 2), 'xr')
-plot(X(indice(c(indice)==1), 1), X(indice(c(indice)==1), 2), "sk") % Positive class support vectors
-% plot(X(indice(c(indice)==-1), 1), X(indice(c(indice)==-1), 2), "sb") % Negative class support vectors
+plot(X(indice(c(indice)==1), 1), X(indice(c(indice)==1), 2), "sk")
+plot(X(indice(c(indice)==-1), 1), X(indice(c(indice)==-1), 2), "sk")
+legend("Données classe 1", "Données classe 2", "Vecteurs supports")
